@@ -1,0 +1,3 @@
+Linha 10: identificador abastecimento nao declarado
+Linha 13: expressao INT
+Fim da compilacao

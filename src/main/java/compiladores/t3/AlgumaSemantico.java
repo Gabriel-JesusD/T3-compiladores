@@ -1,5 +1,6 @@
 package compiladores.t3;
 
+import compiladores.t3.AlgumaParser.CmdAtribuicaoContext;
 import compiladores.t3.AlgumaParser.CmdLeiaContext;
 import compiladores.t3.AlgumaParser.Declaracao_constanteContext;
 import compiladores.t3.AlgumaParser.Declaracao_globalContext;
@@ -124,6 +125,32 @@ public class AlgumaSemantico extends AlgumaBaseVisitor {
             }
         }
         return super.visitIdentificador(ctx);
+    }
+
+    @Override
+    public Object visitCmdAtribuicao(CmdAtribuicaoContext ctx) {
+        Table.Tipos tipoExpressao = SemanticoUtils.verificarTipo(escopos, ctx.expressao());
+        boolean error = false;
+        String nomeVar = ctx.identificador().getText();
+        if (tipoExpressao != Table.Tipos.INVALIDO) {
+            for(Table escopo : escopos.getPilha()){
+                if (escopo.exists(nomeVar))  {
+                    Table.Tipos tipoVariavel = SemanticoUtils.verificarTipo(escopos, nomeVar);
+                    Boolean varNumeric = tipoVariavel == Table.Tipos.REAL || tipoVariavel == Table.Tipos.INT;
+                    Boolean expNumeric = tipoExpressao == Table.Tipos.REAL || tipoExpressao == Table.Tipos.INT;
+                    if  (!(varNumeric && expNumeric) && tipoVariavel != tipoExpressao && tipoExpressao != Table.Tipos.INVALIDO) {
+                        error = true;
+                    }
+                } 
+            }
+        } else{
+            error = true;
+        }
+
+        if(error)
+            SemanticoUtils.adicionarErroSemantico(ctx.identificador().start, "atribuicao nao compativel para " + nomeVar );
+
+        return super.visitCmdAtribuicao(ctx);
     }
 
 }

@@ -5,9 +5,14 @@ import java.util.List;
 
 import org.antlr.v4.runtime.Token;
 
+import compiladores.t3.AlgumaParser.Exp_aritmeticaContext;
+import compiladores.t3.AlgumaParser.ExpressaoContext;
 import compiladores.t3.AlgumaParser.FatorContext;
+import compiladores.t3.AlgumaParser.Fator_logicoContext;
 import compiladores.t3.AlgumaParser.ParcelaContext;
+import compiladores.t3.AlgumaParser.Parcela_logicaContext;
 import compiladores.t3.AlgumaParser.TermoContext;
+import compiladores.t3.AlgumaParser.Termo_logicoContext;
 
 public class SemanticoUtils {
     public static List<String> errosSemanticos = new ArrayList<>();
@@ -18,10 +23,24 @@ public class SemanticoUtils {
         errosSemanticos.add(String.format("Linha %d: %s", linha, mensagem));
     }
     
-    public static Table.Tipos verificarTipo(Table tabela, AlgumaParser.Exp_aritmeticaContext ctx) {
+    public static Table.Tipos verificarTipo(Escopo escopos, AlgumaParser.ExpressaoContext ctx) {
         Table.Tipos ret = null;
-        for (TermoContext ta : ctx.termo()) {
-            Table.Tipos aux = verificarTipo(tabela, ta);
+        for (Termo_logicoContext ta : ctx.termo_logico()) {
+            Table.Tipos aux = verificarTipo(escopos, ta);
+            if (ret == null) {
+                ret = aux;
+            } else if (ret != aux && aux != Table.Tipos.INVALIDO) {
+                ret = Table.Tipos.INVALIDO;
+            }
+        }
+        //SemanticoUtils.adicionarErroSemantico(ctx.start, "9" +ctx.getText() + ret);
+        return ret;
+    }
+
+    public static Table.Tipos verificarTipo(Escopo escopos, AlgumaParser.Termo_logicoContext ctx) {
+        Table.Tipos ret = null;
+        for (Fator_logicoContext ta : ctx.fator_logico()) {
+            Table.Tipos aux = verificarTipo(escopos, ta);
             if (ret == null) {
                 ret = aux;
             } else if (ret != aux && aux != Table.Tipos.INVALIDO) {
@@ -29,93 +48,176 @@ public class SemanticoUtils {
             }
         }
 
+        //SemanticoUtils.adicionarErroSemantico(ctx.start, "8" +ctx.getText() + ret);
         return ret;
     }
 
-    public static Table.Tipos verificarTipo(Table tabela, AlgumaParser.TermoContext ctx) {
+    public static Table.Tipos verificarTipo(Escopo escopos, AlgumaParser.Fator_logicoContext ctx) {
+        //SemanticoUtils.adicionarErroSemantico(ctx.start, ctx.getText() + verificarTipo(escopos, ctx.parcela_logica()));
+        return verificarTipo(escopos, ctx.parcela_logica());
+    }
+
+    public static Table.Tipos verificarTipo(Escopo escopos, AlgumaParser.Parcela_logicaContext ctx) {
+        Table.Tipos ret = null;
+        if(ctx.exp_relacional() != null){
+            ret = verificarTipo(escopos, ctx.exp_relacional());
+        } else{
+            ret = Table.Tipos.LOGICO;
+        }
+
+        //SemanticoUtils.adicionarErroSemantico(ctx.start, "7" +ctx.getText() + ret);
+        return ret;
+    }
+
+    public static Table.Tipos verificarTipo(Escopo escopos, AlgumaParser.Exp_relacionalContext ctx) {
+        Table.Tipos ret = null;
+        if(ctx.op_relacional() != null){
+            for (Exp_aritmeticaContext ta : ctx.exp_aritmetica()) {
+                Table.Tipos aux = verificarTipo(escopos, ta);
+                Boolean auxNumeric = aux == Table.Tipos.REAL || aux == Table.Tipos.INT;
+                Boolean retNumeric = ret == Table.Tipos.REAL || ret == Table.Tipos.INT;
+                if (ret == null) {
+                    ret = aux;
+                } else if (!(auxNumeric && retNumeric) && aux != ret) {
+                    ret = Table.Tipos.INVALIDO;
+                }
+            }
+            if(ret != Table.Tipos.INVALIDO){
+                ret = Table.Tipos.LOGICO;
+            }
+        } else {
+            ret = verificarTipo(escopos, ctx.exp_aritmetica(0));
+        }
+
+        //SemanticoUtils.adicionarErroSemantico(ctx.start, "6" +ctx.getText() + ret);
+        return ret;
+    }
+
+    public static Table.Tipos verificarTipo(Escopo escopos, AlgumaParser.Exp_aritmeticaContext ctx) {
+        Table.Tipos ret = null;
+        for (TermoContext ta : ctx.termo()) {
+            Table.Tipos aux = verificarTipo(escopos, ta);
+            if (ret == null) {
+                ret = aux;
+            } else if (ret != aux && aux != Table.Tipos.INVALIDO) {
+                ret = Table.Tipos.INVALIDO;
+            }
+        }
+
+        //SemanticoUtils.adicionarErroSemantico(ctx.start, "5" +ctx.getText() + ret);
+        return ret;
+    }
+
+    public static Table.Tipos verificarTipo(Escopo escopos, AlgumaParser.TermoContext ctx) {
         Table.Tipos ret = null;
 
         for (FatorContext fa : ctx.fator()) {
-            Table.Tipos aux = verificarTipo(tabela, fa);
+            Table.Tipos aux = verificarTipo(escopos, fa);
+            Boolean auxNumeric = aux == Table.Tipos.REAL || aux == Table.Tipos.INT;
+            Boolean retNumeric = ret == Table.Tipos.REAL || ret == Table.Tipos.INT;
             if (ret == null) {
                 ret = aux;
-            } else if (ret != aux && aux != Table.Tipos.INVALIDO) {
+            } else if (!(auxNumeric && retNumeric) && aux != ret) {
                 ret = Table.Tipos.INVALIDO;
             }
         }
+        //SemanticoUtils.adicionarErroSemantico(ctx.start, "4" +ctx.getText() + ret);
         return ret;
     }
-    public static Table.Tipos verificarTipo(Table tabela, AlgumaParser.FatorContext ctx) {
+    public static Table.Tipos verificarTipo(Escopo escopos, AlgumaParser.FatorContext ctx) {
         Table.Tipos ret = null;
 
         for (ParcelaContext fa : ctx.parcela()) {
-            Table.Tipos aux = verificarTipo(tabela, fa);
+            Table.Tipos aux = verificarTipo(escopos, fa);
             if (ret == null) {
                 ret = aux;
             } else if (ret != aux && aux != Table.Tipos.INVALIDO) {
-                adicionarErroSemantico(ctx.start, "Termo " + ctx.getText() + " contém tipos incompatíveis");
                 ret = Table.Tipos.INVALIDO;
             }
         }
+        //SemanticoUtils.adicionarErroSemantico(ctx.start, "3" +ctx.getText() + ret);
         return ret;
     }
-    public static Table.Tipos verificarTipo(Table tabela, AlgumaParser.ParcelaContext ctx) {
-        Table.Tipos ret = null;
+    public static Table.Tipos verificarTipo(Escopo escopos, AlgumaParser.ParcelaContext ctx) {
+        Table.Tipos ret = Table.Tipos.INVALIDO;
 
         if(ctx.parcela_nao_unario() != null){
-            return verificarTipo(tabela, ctx.parcela_nao_unario());
+            ret = verificarTipo(escopos, ctx.parcela_nao_unario());
         }
         else {
-            return verificarTipo(tabela, ctx.parcela_unario());
+            //SemanticoUtils.adicionarErroSemantico(ctx.start, "ta aq: " + ctx.getText() + verificarTipo(escopos, ctx.parcela_unario()));
+            ret = verificarTipo(escopos, ctx.parcela_unario());
         }
+        //SemanticoUtils.adicionarErroSemantico(ctx.start, "2" + ctx.getText() + ret);
+        return ret;
     }
 
-    public static Table.Tipos verificarTipo(Table tabela, AlgumaParser.Parcela_nao_unarioContext ctx) {
-        if (ctx.CADEIA() != null) {
-            return Table.Tipos.CADEIA;
+    public static Table.Tipos verificarTipo(Escopo escopos, AlgumaParser.Parcela_nao_unarioContext ctx) {
+        if (ctx.identificador() != null) {
+            return verificarTipo(escopos, ctx.identificador());
         }
-        // if (ctx.identificador() != null) {
-            return verificarTipo(tabela, ctx.identificador());
-        // }
-        // se não for nenhum dos tipos acima, só pode ser uma expressão
-        // entre parêntesis
+        return Table.Tipos.CADEIA;
     }
 
-    public static Table.Tipos verificarTipo(Table tabela, AlgumaParser.IdentificadorContext ctx) {//kk suspeitos
+    public static Table.Tipos verificarTipo(Escopo escopos, AlgumaParser.IdentificadorContext ctx) {//kk suspeitos
         String nomeVar = "";
+        Table.Tipos ret = Table.Tipos.INVALIDO;
         for(int i = 0; i < ctx.IDENT().size(); i++){
-            nomeVar.concat(ctx.IDENT(i).getText());
+            nomeVar += ctx.IDENT(i).getText();
             if(i != ctx.IDENT().size() - 1){
-                nomeVar.concat(".");
+                nomeVar += ".";
             }
         }
-        if (!tabela.exists(nomeVar)) {
-            return Table.Tipos.INVALIDO;
-        } else{
-            return verificarTipo(tabela, nomeVar);
+        for(Table tabela : escopos.getPilha()){
+            if (tabela.exists(nomeVar)) {
+                ret = verificarTipo(escopos, nomeVar);
+            }
+        }
+        System.out.println(nomeVar);
+        return ret;
+    }
+    
+    public static Table.Tipos verificarTipo(Escopo escopos, AlgumaParser.Parcela_unarioContext ctx) {
+        if (ctx.NUM_INT() != null) {
+            return Table.Tipos.INT;
+        }
+        if (ctx.NUM_REAL() != null) {
+            return Table.Tipos.REAL;
+        }
+        if(ctx.identificador() != null){
+            return verificarTipo(escopos, ctx.identificador());
+        }
+        if (ctx.IDENT() != null) {
+            Table.Tipos ret = null;
+            ret = verificarTipo(escopos, ctx.IDENT().getText());
+            for (ExpressaoContext fa : ctx.expressao()) {
+                Table.Tipos aux = verificarTipo(escopos, fa);
+                if (ret == null) {
+                    ret = aux;
+                } else if (ret != aux && aux != Table.Tipos.INVALIDO) {
+                    ret = Table.Tipos.INVALIDO;
+                }
+            }
+            return ret;
+        } else {
+            Table.Tipos ret = null;
+            for (ExpressaoContext fa : ctx.expressao()) {
+                Table.Tipos aux = verificarTipo(escopos, fa);
+                if (ret == null) {
+                    ret = aux;
+                } else if (ret != aux && aux != Table.Tipos.INVALIDO) {
+                    ret = Table.Tipos.INVALIDO;
+                }
+            }
+            return ret;
         }
     }
     
-    public static Table.Tipos verificarTipo(Table tabela, AlgumaParser.Parcela_unarioContext ctx) {
-        // if (ctx.NUM_INT() != null) {
-        //     return Table.Tipos.INT;
-        // }
-        // if (ctx.NUM_REAL() != null) {
-        //     return Table.Tipos.REAL;
-        // }
-        // if (ctx.IDENT() != null) {
-        //     String nomeVar = ctx.IDENT().getText();
-        //     if (!tabela.exists(nomeVar)) {
-        //         adicionarErroSemantico(ctx.IDENT().getSymbol(), "Variável " + nomeVar + " não foi declarada antes do uso");
-        //         return Table.Tipos.INVALIDO;
-        //     }
-        //     return verificarTipo(tabela, nomeVar);
-        // }
-        return Table.Tipos.INVALIDO;
-
-    }
-    
-    public static Table.Tipos verificarTipo(Table tabela, String nomeVar) {
-        return tabela.verify(nomeVar);
+    public static Table.Tipos verificarTipo(Escopo escopos, String nomeVar) {
+        Table.Tipos type = null;
+        for(Table tabela : escopos.getPilha()){
+            type = tabela.verify(nomeVar);
+        }
+        return type;
     }
 }
