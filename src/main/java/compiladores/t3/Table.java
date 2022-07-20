@@ -5,7 +5,7 @@ import java.util.HashMap;
 public class Table {
 
     public enum Tipos{
-        INT, REAL, CADEIA, INVALIDO
+        INT, REAL, CADEIA, LOGICO, INVALIDO, TIPO, IDENT
     }
 
     class InSymbol{

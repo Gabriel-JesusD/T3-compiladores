@@ -3,9 +3,12 @@ grammar Alguma;
 programa: declaracoes 'algoritmo' corpo 'fim_algoritmo' EOF;
 declaracoes: (decl_local_global)*;
 decl_local_global: declaracao_local | declaracao_global;
-declaracao_local: 'declare' variavel |
-                'constante' IDENT ':' tipo_basico '=' valor_constante |
-                'tipo' IDENT ':' tipo;
+declaracao_local: declaracao_variavel |
+                declaracao_constante |
+                declaracao_tipo;
+declaracao_variavel: 'declare' variavel;
+declaracao_constante: 'constante' IDENT ':' tipo_basico '=' valor_constante;
+declaracao_tipo: 'tipo' IDENT ':' tipo;
 variavel: identificador (',' identificador)* ':' tipo;
 identificador: IDENT ('.' IDENT)* dimensao;
 dimensao: ('[' exp_aritmetica ']')*;

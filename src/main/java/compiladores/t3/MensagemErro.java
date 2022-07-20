@@ -9,11 +9,11 @@ import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
 import org.antlr.v4.runtime.atn.ATNConfigSet;
-import compiladores.AlgumaLexer;
+// import compiladores.AlgumaLexer;
 import org.antlr.v4.runtime.dfa.DFA;
 
 public class MensagemErro implements ANTLRErrorListener {
-    PrintWriter p;
+    public PrintWriter p;
     static boolean got_error = false; // utilizado para evitar impressões após encontrar primeiro erro
     public MensagemErro(PrintWriter p){
         this.p = p;

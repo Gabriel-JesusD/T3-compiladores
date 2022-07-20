@@ -5,10 +5,9 @@ import java.util.List;
 
 import org.antlr.v4.runtime.Token;
 
-import compiladores.AlgumaParser;
-import compiladores.AlgumaParser.FatorContext;
-import compiladores.AlgumaParser.ParcelaContext;
-import compiladores.AlgumaParser.TermoContext;
+import compiladores.t3.AlgumaParser.FatorContext;
+import compiladores.t3.AlgumaParser.ParcelaContext;
+import compiladores.t3.AlgumaParser.TermoContext;
 
 public class SemanticoUtils {
     public static List<String> errosSemanticos = new ArrayList<>();
@@ -16,7 +15,7 @@ public class SemanticoUtils {
     public static void adicionarErroSemantico(Token t, String mensagem) {
         int linha = t.getLine();
         int coluna = t.getCharPositionInLine();
-        errosSemanticos.add(String.format("Erro %d:%d - %s", linha, coluna, mensagem));
+        errosSemanticos.add(String.format("Linha %d: %s", linha, mensagem));
     }
     
     public static Table.Tipos verificarTipo(Table tabela, AlgumaParser.Exp_aritmeticaContext ctx) {
@@ -26,7 +25,6 @@ public class SemanticoUtils {
             if (ret == null) {
                 ret = aux;
             } else if (ret != aux && aux != Table.Tipos.INVALIDO) {
-                adicionarErroSemantico(ctx.start, "Expressão " + ctx.getText() + " contém tipos incompatíveis");
                 ret = Table.Tipos.INVALIDO;
             }
         }
@@ -42,7 +40,6 @@ public class SemanticoUtils {
             if (ret == null) {
                 ret = aux;
             } else if (ret != aux && aux != Table.Tipos.INVALIDO) {
-                adicionarErroSemantico(ctx.start, "Termo " + ctx.getText() + " contém tipos incompatíveis");
                 ret = Table.Tipos.INVALIDO;
             }
         }
@@ -68,65 +65,54 @@ public class SemanticoUtils {
         if(ctx.parcela_nao_unario() != null){
             return verificarTipo(tabela, ctx.parcela_nao_unario());
         }
-        // if(ctx.parcela_nao_unario() != null){
+        else {
             return verificarTipo(tabela, ctx.parcela_unario());
-        // }
+        }
     }
 
     public static Table.Tipos verificarTipo(Table tabela, AlgumaParser.Parcela_nao_unarioContext ctx) {
         if (ctx.CADEIA() != null) {
             return Table.Tipos.CADEIA;
         }
-        if (ctx.identificador() != null) {
+        // if (ctx.identificador() != null) {
             return verificarTipo(tabela, ctx.identificador());
-        }
+        // }
         // se não for nenhum dos tipos acima, só pode ser uma expressão
         // entre parêntesis
-        return verificarTipo(tabela, ctx.expressao());
     }
 
     public static Table.Tipos verificarTipo(Table tabela, AlgumaParser.IdentificadorContext ctx) {//kk suspeitos
-        if (ctx.IDENT() != null) {
-            String nomeVar;
-            for(int i = 0; i < ctx.IDENT().size(); i++){
-                nomeVar += ctx.IDENT().get(i);
+        String nomeVar = "";
+        for(int i = 0; i < ctx.IDENT().size(); i++){
+            nomeVar.concat(ctx.IDENT(i).getText());
+            if(i != ctx.IDENT().size() - 1){
+                nomeVar.concat(".");
             }
-            if (!tabela.exists(nomeVar)) {
-                adicionarErroSemantico(ctx.IDENT().get(0).getSymbol(), "Variável " + nomeVar + " não foi declarada antes do uso");
-                return Table.Tipos.INVALIDO;
-            }
-            // return verificarTipo(tabela, nomeVar);
         }
-        // se não for nenhum dos tipos acima, só pode ser uma expressão
-        // entre parêntesis
-        return verificarTipo(tabela, ctx.dimensao());
-    }
-    public static Table.Tipos verificarTipo(Table tabela, AlgumaParser.DimensaoContext ctx) {//kk suspeitos
-        // se não for nenhum dos tipos acima, só pode ser uma expressão
-        // entre parêntesis
-        return verificarTipo(tabela, ctx.exp_aritmetica(0));
-    }
-
-    
-
-    public static Table.Tipos verificarTipo(Table tabela, AlgumaParser.Parcela_unarioContext ctx) {
-        if (ctx.NUM_INT() != null) {
-            return Table.Tipos.INT;
-        }
-        if (ctx.NUM_REAL() != null) {
-            return Table.Tipos.REAL;
-        }
-        if (ctx.IDENT() != null) {
-            String nomeVar = ctx.IDENT().getText();
-            if (!tabela.exists(nomeVar)) {
-                adicionarErroSemantico(ctx.IDENT().getSymbol(), "Variável " + nomeVar + " não foi declarada antes do uso");
-                return Table.Tipos.INVALIDO;
-            }
+        if (!tabela.exists(nomeVar)) {
+            return Table.Tipos.INVALIDO;
+        } else{
             return verificarTipo(tabela, nomeVar);
         }
-        // se não for nenhum dos tipos acima, só pode ser uma expressão
-        // entre parêntesis
-        return verificarTipo(tabela, ctx.expressao());
+    }
+    
+    public static Table.Tipos verificarTipo(Table tabela, AlgumaParser.Parcela_unarioContext ctx) {
+        // if (ctx.NUM_INT() != null) {
+        //     return Table.Tipos.INT;
+        // }
+        // if (ctx.NUM_REAL() != null) {
+        //     return Table.Tipos.REAL;
+        // }
+        // if (ctx.IDENT() != null) {
+        //     String nomeVar = ctx.IDENT().getText();
+        //     if (!tabela.exists(nomeVar)) {
+        //         adicionarErroSemantico(ctx.IDENT().getSymbol(), "Variável " + nomeVar + " não foi declarada antes do uso");
+        //         return Table.Tipos.INVALIDO;
+        //     }
+        //     return verificarTipo(tabela, nomeVar);
+        // }
+        return Table.Tipos.INVALIDO;
+
     }
     
     public static Table.Tipos verificarTipo(Table tabela, String nomeVar) {

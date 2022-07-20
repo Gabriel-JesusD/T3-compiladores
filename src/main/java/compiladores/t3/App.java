@@ -7,9 +7,9 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.Token;
+import compiladores.t3.AlgumaParser;
 
-import compiladores.AlgumaLexer;
-import compiladores.AlgumaParser;
+import compiladores.t3.AlgumaParser.ProgramaContext;
 
 /**
  * Gabriel de Jesus Dantas 773412
@@ -24,15 +24,16 @@ public class App
             AlgumaLexer lex = new AlgumaLexer(c);
             CommonTokenStream cs = new CommonTokenStream(lex); //conversão para token stream
             AlgumaParser parser = new AlgumaParser(cs);
-            parser.removeErrorListeners(); // retirar as mensagens nativas do antlr
-            MensagemErro me = new MensagemErro(p); // passar o arquivo de saida para imprimir a mensagem de erro
-            parser.addErrorListener(me);
-            parser.programa();// realiza parse do programa
-               
-            p.println("Fim da compilacao");//ao final da compilacao imprime esse sinal
-
+            AlgumaParser.ProgramaContext arvore = parser.programa();   
+            AlgumaSemantico as = new AlgumaSemantico();  
+            as.visitPrograma(arvore);
+            for(String err: SemanticoUtils.errosSemanticos){
+                p.println(err);
+            }
+            p.println("Fim da compilacao");
+            p.close();
         } catch (Exception e) {
-            System.err.println(e.getMessage());
+            System.err.println(e);
         }
     }
 }
